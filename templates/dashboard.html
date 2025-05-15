@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-container">
+    <div class="sidebar">
+      <div>
+        <div class="user-section">
+          <i class="fas fa-user-circle"></i>
+          <h3>{{ session['user'] }}</h3>
+        </div>
+        <a href="#functions" class="nav-link"><i class="fas fa-tools"></i><span>Functions</span></a>
+        <div class="theme-toggle" onclick="toggleTheme()">
+          <i class="fas fa-moon"></i><span>Toggle Theme</span>
+        </div>
+      </div>
+      <a href="/logout" class="logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      <div class="sidebar-toggle">
+        <i class="fas fa-arrows-alt-h"></i>
+      </div>
+    </div>
+    <div class="content">
+      <div id="functions" class="section">
+        <h2>Text Processing Functions</h2>
+        <div class="card-container">
+          <div class="card" onclick="showFunction('spell')">
+            <i class="fas fa-spell-check"></i>
+            <h3>Spell Checker</h3>
+            <p>Check and correct spelling errors in your text.</p>
+          </div>
+          <div class="card" onclick="showFunction('grammar')">
+            <i class="fas fa-pen"></i>
+            <h3>Grammar Correction</h3>
+            <p>Improve grammar and sentence structure.</p>
+          </div>
+          <div class="card" onclick="showFunction('translate')">
+            <i class="fas fa-globe"></i>
+            <h3>Language Converter</h3>
+            <p>Translate text to different languages.</p>
+          </div>
+          <div class="card" onclick="showFunction('file')">
+            <i class="fas fa-file-upload"></i>
+            <h3>File Upload</h3>
+            <p>Upload and process text or PDF files.</p>
+          </div>
+        </div>
+
+        <!-- Spell Checker Form -->
+        <div id="spell-form" class="function-form box" style="display: none;">
+          <h2>Spell Checker</h2>
+          <form action="/spell" method="POST">
+            <textarea name="text" id="spellText" placeholder="Enter text to spell-check" required></textarea>
+            <div class="input-group">
+              <button type="button" onclick="startListening('spellText')">🎤 Speak</button>
+              <select name="language" onchange="updateLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+              </select>
+              <button type="submit">Check</button>
+            </div>
+            <div class="results">
+              {% if spell_results and spell_results.corrected %}
+              <h3>Original:</h3>
+              <textarea readonly>{{ spell_results.original }}</textarea>
+              <h3>Corrected:</h3>
+              <textarea readonly>{{ spell_results.corrected }}</textarea>
+              <h3>Tone:</h3>
+              <p>{{ spell_results.tone }}</p>
+              <button onclick="speakCorrected('spell')">🔊 Listen</button>
+              {% else %}
+              <p>No results yet. Submit text to see corrections.</p>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+
+        <!-- Grammar Correction Form -->
+        <div id="grammar-form" class="function-form box" style="display: none;">
+          <h2>Grammar Correction</h2>
+          <form action="/grammar" method="POST">
+            <textarea name="text" id="grammarText" placeholder="Enter text for grammar correction" required></textarea>
+            <div class="input-group">
+              <button type="button" onclick="startListening('grammarText')">🎤 Speak</button>
+              <select name="language" onchange="updateLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+              </select>
+              <button type="submit">Correct</button>
+            </div>
+            <div class="results">
+              {% if grammar_results and grammar_results.corrected %}
+              <h3>Original:</h3>
+              <textarea readonly>{{ grammar_results.original }}</textarea>
+              <h3>Corrected:</h3>
+              <textarea readonly>{{ grammar_results.corrected }}</textarea>
+              <h3>Tone:</h3>
+              <p>{{ grammar_results.tone }}</p>
+              <button onclick="speakCorrected('grammar')">🔊 Listen</button>
+              {% else %}
+              <p>No results yet. Submit text to see corrections.</p>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+
+        <!-- Language Converter Form -->
+        <div id="translate-form" class="function-form box" style="display: none;">
+          <h2>Language Converter</h2>
+          <form action="/translate" method="POST">
+            <textarea name="text" id="translateText" placeholder="Enter text to translate" required></textarea>
+            <div class="input-group">
+              <button type="button" onclick="startListening('translateText')">🎤 Speak</button>
+              <select name="language" onchange="updateLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+              </select>
+              <button type="submit">Convert</button>
+            </div>
+            <div class="results">
+              {% if translate_results and translate_results.corrected %}
+              <h3>Original:</h3>
+              <textarea readonly>{{ translate_results.original }}</textarea>
+              <h3>Translated:</h3>
+              <textarea readonly>{{ translate_results.corrected }}</textarea>
+              <h3>Tone:</h3>
+              <p>{{ translate_results.tone }}</p>
+              <button onclick="speakCorrected('translate')">🔊 Listen</button>
+              {% else %}
+              <p>No results yet. Submit text to see translation.</p>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+
+        <!-- File Upload Form -->
+        <div id="file-form" class="function-form box" style="display: none;">
+          <h2>File Upload</h2>
+          <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".txt,.pdf" required />
+            <div class="input-group">
+              <select name="language">
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+              </select>
+              <button type="submit">Upload</button>
+            </div>
+            <div class="results">
+              {% if file_results and file_results.original and file_results.corrected %}
+              <h3>Original:</h3>
+              <textarea readonly>{{ file_results.original }}</textarea>
+              <h3>Corrected:</h3>
+              <textarea readonly>{{ file_results.corrected }}</textarea>
+              <h3>Tone:</h3>
+              <p>{{ file_results.tone }}</p>
+              <button onclick="speakCorrected('file')">🔊 Listen</button>
+              {% else %}
+              <p>No results yet. Upload a file to see corrections.</p>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLang = 'en-US';
+
+    function updateLanguage(lang) {
+      const langMap = {
+        en: 'en-US',
+        hi: 'hi-IN',
+        fr: 'fr-FR',
+        es: 'es-ES',
+        de: 'de-DE'
+      };
+      currentLang = langMap[lang] || 'en-US';
+    }
+
+    function startListening(targetId) {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = currentLang;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = (event) => {
+        const speechResult = event.results[0][0].transcript;
+        document.getElementById(targetId).value = speechResult;
+      };
+
+      recognition.onerror = (event) => {
+        alert("Speech recognition error: " + event.error);
+      };
+
+      recognition.start();
+    }
+
+    function speakCorrected(sectionId) {
+      const corrected = document.querySelector(`#${sectionId}-form .results textarea[readonly]:last-child`)?.value;
+      if (!corrected) return;
+      const utterance = new SpeechSynthesisUtterance(corrected);
+      utterance.lang = currentLang;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function showFunction(functionId) {
+      const forms = document.querySelectorAll('.function-form');
+      forms.forEach(form => {
+        form.style.display = form.id === `${functionId}-form` ? 'block' : 'none';
+      });
+      document.getElementById('functions').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const currentTheme = body.getAttribute('data-theme');
+      body.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+      localStorage.setItem('theme', body.getAttribute('data-theme'));
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const content = document.querySelector('.content');
+      sidebar.classList.toggle('minimized');
+      content.classList.toggle('sidebar-minimized');
+      const newState = sidebar.classList.contains('minimized') ? 'minimized' : 'maximized';
+      localStorage.setItem('sidebarState', newState);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.body.setAttribute('data-theme', savedTheme);
+
+      const savedState = localStorage.getItem('sidebarState') || 'maximized';
+      if (savedState === 'minimized') {
+        document.querySelector('.sidebar').classList.add('minimized');
+        document.querySelector('.content').classList.add('sidebar-minimized');
+      }
+
+      document.querySelector('.sidebar-toggle').addEventListener('click', toggleSidebar);
+
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const sectionId = link.getAttribute('href').substring(1);
+          document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

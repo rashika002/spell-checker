@@ -1,0 +1,10 @@
+flask
+textblob
+language_tool_python
+pymongo
+python-dotenv
+openai
+nltk
+
+
+

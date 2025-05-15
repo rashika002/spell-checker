@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Grammar and Spell Checker</title>
+    <link
+      href="{{ url_for('static', filename='style.css') }}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <h1 class="text-center">Grammar And Spell Checker</h1>
+    <div class="container">
+      <form action="/spell" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="text">Type your text here</label>
+          <textarea class="form-control" id="text" name="text"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Correct</button>
+      </form>
+      {% if corrected_text and corrected_grammar %}
+      <h5>Corrected Word: <br />{{ corrected_text }}</h5>
+      <h5>Grammar Mistakes: <br />{{ corrected_grammar }}</h5>
+      {% endif %}
+    </div>
+
+    <div class="container">
+      <form action="/grammar" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="file">Upload File</label>
+          <input type="file" name="file" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary">Correct</button>
+      </form>
+
+      {% if corrected_file_text and corrected_file_grammar %}
+      <h5>Corrected Word: <br />{{ corrected_file_text }}</h5>
+      <h5>Grammar Mistakes: <br />{{ corrected_file_grammar }}</h5>
+      {% endif %}
+    </div>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Dashboard</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <h1>Welcome, {{ session['user'] }}!</h1>
+
+    <!-- Form to enter text for spelling check -->
+    <form action="/spell" method="post">
+      <textarea name="text" placeholder="Enter text here..."></textarea><br />
+      <button type="submit">Check Spelling</button>
+    </form>
+
+    <!-- Display corrected text if available -->
+    {% if corrected_text %}
+    <div class="correctedtext">
+      <h2>Corrected Text:</h2>
+      <p>{{ corrected_text }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Logout link at the bottom -->
+    <footer>
+      <a href="/logout">Logout</a>
+    </footer>
+  </body>
+</html>
