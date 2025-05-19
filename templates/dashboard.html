@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,7 +54,7 @@
         <!-- Spell Checker Form -->
         <div id="spell-form" class="function-form box" style="display: none;">
           <h2>Spell Checker</h2>
-          <form action="/spell" method="POST">
+          <form id="spellForm" method="POST">
             <textarea name="text" id="spellText" placeholder="Enter text to spell-check" required></textarea>
             <div class="input-group">
               <button type="button" onclick="startListening('spellText')">🎤 Speak</button>
@@ -65,7 +64,7 @@
               </select>
               <button type="submit">Check</button>
             </div>
-            <div class="results">
+            <div class="results" id="spellResults">
               {% if spell_results and spell_results.corrected %}
               <h3>Original:</h3>
               <textarea readonly>{{ spell_results.original }}</textarea>
@@ -84,7 +83,7 @@
         <!-- Grammar Correction Form -->
         <div id="grammar-form" class="function-form box" style="display: none;">
           <h2>Grammar Correction</h2>
-          <form action="/grammar" method="POST">
+          <form id="grammarForm" method="POST">
             <textarea name="text" id="grammarText" placeholder="Enter text for grammar correction" required></textarea>
             <div class="input-group">
               <button type="button" onclick="startListening('grammarText')">🎤 Speak</button>
@@ -94,7 +93,7 @@
               </select>
               <button type="submit">Correct</button>
             </div>
-            <div class="results">
+            <div class="results" id="grammarResults">
               {% if grammar_results and grammar_results.corrected %}
               <h3>Original:</h3>
               <textarea readonly>{{ grammar_results.original }}</textarea>
@@ -113,7 +112,7 @@
         <!-- Language Converter Form -->
         <div id="translate-form" class="function-form box" style="display: none;">
           <h2>Language Converter</h2>
-          <form action="/translate" method="POST">
+          <form id="translateForm" method="POST">
             <textarea name="text" id="translateText" placeholder="Enter text to translate" required></textarea>
             <div class="input-group">
               <button type="button" onclick="startListening('translateText')">🎤 Speak</button>
@@ -126,7 +125,7 @@
               </select>
               <button type="submit">Convert</button>
             </div>
-            <div class="results">
+            <div class="results" id="translateResults">
               {% if translate_results and translate_results.corrected %}
               <h3>Original:</h3>
               <textarea readonly>{{ translate_results.original }}</textarea>
@@ -145,7 +144,7 @@
         <!-- File Upload Form -->
         <div id="file-form" class="function-form box" style="display: none;">
           <h2>File Upload</h2>
-          <form action="/upload" method="POST" enctype="multipart/form-data">
+          <form id="fileForm" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" accept=".txt,.pdf" required />
             <div class="input-group">
               <select name="language">
@@ -157,8 +156,8 @@
               </select>
               <button type="submit">Upload</button>
             </div>
-            <div class="results">
-              {% if file_results and file_results.original and file_results.corrected %}
+            <div class="results" id="fileResults">
+              {% if file_results and file_results.corrected %}
               <h3>Original:</h3>
               <textarea readonly>{{ file_results.original }}</textarea>
               <h3>Corrected:</h3>
@@ -240,6 +239,43 @@
       localStorage.setItem('sidebarState', newState);
     }
 
+    // Handle form submissions with AJAX
+    function handleFormSubmission(formId, endpoint, resultDivId) {
+      const form = document.getElementById(formId);
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await response.json();
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+          const resultDiv = document.getElementById(resultDivId);
+          if (data.results && data.results.corrected) {
+            resultDiv.innerHTML = `
+              <h3>Original:</h3>
+              <textarea readonly>${data.results.original || ''}</textarea>
+              <h3>${endpoint.includes('translate') ? 'Translated' : 'Corrected'}:</h3>
+              <textarea readonly>${data.results.corrected}</textarea>
+              <h3>Tone:</h3>
+              <p>${data.results.tone}</p>
+              <button onclick="speakCorrected('${formId.split('Form')[0]}')">🔊 Listen</button>
+            `;
+          } else {
+            resultDiv.innerHTML = '<p>No results yet. Submit text to see corrections.</p>';
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while processing your request.');
+        }
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.body.setAttribute('data-theme', savedTheme);
@@ -259,6 +295,12 @@
           document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
         });
       });
+
+      // Initialize AJAX form handlers
+      handleFormSubmission('spellForm', '/spell', 'spellResults');
+      handleFormSubmission('grammarForm', '/grammar', 'grammarResults');
+      handleFormSubmission('translateForm', '/translate', 'translateResults');
+      handleFormSubmission('fileForm', '/upload', 'fileResults');
     });
   </script>
 </body>
