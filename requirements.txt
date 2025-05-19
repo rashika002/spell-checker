@@ -6,7 +6,8 @@ python-dotenv
 openai
 nltk
 gunicorn
-
+deep-translator
+PyPDF2
 
 
 
